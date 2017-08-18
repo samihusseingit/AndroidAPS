@@ -1,13 +1,8 @@
 package info.nightscout.androidaps.plugins.TempBasals;
 
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 
 import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.stmt.PreparedQuery;
-import com.j256.ormlite.stmt.QueryBuilder;
-import com.j256.ormlite.stmt.Where;
 import com.squareup.otto.Subscribe;
 
 import org.slf4j.Logger;
@@ -23,12 +18,13 @@ import java.util.List;
 import info.nightscout.androidaps.Config;
 import info.nightscout.androidaps.MainApp;
 import info.nightscout.androidaps.R;
+import info.nightscout.androidaps.data.IobTotal;
 import info.nightscout.androidaps.db.TempBasal;
 import info.nightscout.androidaps.events.EventPreferenceChange;
 import info.nightscout.androidaps.events.EventTempBasalChange;
 import info.nightscout.androidaps.interfaces.PluginBase;
 import info.nightscout.androidaps.interfaces.TempBasalsInterface;
-import info.nightscout.androidaps.plugins.OpenAPSMA.IobTotal;
+import info.nightscout.utils.SP;
 
 /**
  * Created by mike on 05.08.2016.
@@ -48,8 +44,7 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
     private static boolean fragmentVisible = true;
 
     public TempBasalsPlugin() {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(MainApp.instance().getApplicationContext());
-        useExtendedBoluses = sharedPreferences.getBoolean("danar_useextended", false);
+        useExtendedBoluses = SP.getBoolean("danar_useextended", false);
         initializeData();
         MainApp.bus().register(this);
     }
@@ -62,6 +57,17 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
     @Override
     public String getName() {
         return MainApp.instance().getString(R.string.tempbasals);
+    }
+
+    @Override
+    public String getNameShort() {
+        String name = MainApp.sResources.getString(R.string.tempbasals_shortname);
+        if (!name.trim().isEmpty()){
+            //only if translation exists
+            return name;
+        }
+        // use long name as fallback
+        return getName();
     }
 
     @Override
@@ -80,6 +86,16 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
     }
 
     @Override
+    public boolean hasFragment() {
+        return true;
+    }
+
+    @Override
+    public boolean showInList(int type) {
+        return true;
+    }
+
+    @Override
     public void setFragmentEnabled(int type, boolean fragmentEnabled) {
         if (type == TEMPBASAL) this.fragmentEnabled = fragmentEnabled;
     }
@@ -94,45 +110,17 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
         return PluginBase.TEMPBASAL;
     }
 
-    private void initializeData() {
-        try {
-            Dao<TempBasal, Long> dao = MainApp.getDbHelper().getDaoTempBasals();
-/*
-            // **************** TESTING CREATE FAKE RECORD *****************
-            TempBasal fake = new TempBasal();
-            fake.timeStart = new Date(new Date().getTime() - 45 * 40 * 1000);
-            fake.timeEnd = new Date(new Date().getTime() - new Double(Math.random() * 45d * 40 * 1000).longValue());
-            fake.duration = 30;
-            fake.percent = 150;
-            fake.isAbsolute = false;
-            fake.isExtended = false;
-            dao.createOrUpdate(fake);
-            // **************** TESTING CREATE FAKE RECORD *****************
-*/
-            QueryBuilder<TempBasal, Long> queryBuilder = dao.queryBuilder();
-            queryBuilder.orderBy("timeIndex", false);
-            Where where = queryBuilder.where();
-            where.eq("isExtended", false);
-            queryBuilder.limit(30L);
-            PreparedQuery<TempBasal> preparedQuery = queryBuilder.prepare();
-            tempBasals = dao.query(preparedQuery);
+    public void initializeData() {
+        double dia = 3;
+        if (MainApp.getConfigBuilder().getActiveProfile() != null && MainApp.getConfigBuilder().getActiveProfile().getProfile() != null)
+            dia = MainApp.getConfigBuilder().getActiveProfile().getProfile().getDia();
+        long fromMills = (long) (new Date().getTime() - 60 * 60 * 1000L * (24 + dia));
+        tempBasals = MainApp.getDbHelper().getTempbasalsDataFromTime(fromMills, false, false);
+        extendedBoluses = MainApp.getDbHelper().getTempbasalsDataFromTime(fromMills, false, true);
 
-            QueryBuilder<TempBasal, Long> queryBuilderExt = dao.queryBuilder();
-            queryBuilderExt.orderBy("timeIndex", false);
-            Where whereExt = queryBuilderExt.where();
-            whereExt.eq("isExtended", true);
-            queryBuilderExt.limit(30L);
-            PreparedQuery<TempBasal> preparedQueryExt = queryBuilderExt.prepare();
-            extendedBoluses = dao.query(preparedQueryExt);
-
-            // Update ended
-            checkForExpiredExtended();
-            checkForExpiredTemps();
-        } catch (SQLException e) {
-            log.debug(e.getMessage(), e);
-            tempBasals = new ArrayList<TempBasal>();
-            extendedBoluses = new ArrayList<TempBasal>();
-        }
+        // Update ended
+        checkForExpiredExtended();
+        checkForExpiredTemps();
     }
 
     public void checkForExpiredTemps() {
@@ -148,8 +136,8 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
         for (int position = list.size() - 1; position >= 0; position--) {
             TempBasal t = list.get(position);
             boolean update = false;
-            if (t.timeEnd == null && t.getPlannedTimeEnd().getTime() < now) {
-                t.timeEnd = new Date(t.getPlannedTimeEnd().getTime());
+            if (t.timeEnd == null && t.getPlannedTimeEnd() < now) {
+                t.timeEnd = new Date(t.getPlannedTimeEnd());
                 if (Config.logTempBasalsCut)
                     log.debug("Add timeEnd to old record");
                 update = true;
@@ -157,7 +145,7 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
             if (position > 0) {
                 Date startofnewer = list.get(position - 1).timeStart;
                 if (t.timeEnd == null) {
-                    t.timeEnd = new Date(Math.min(startofnewer.getTime(), t.getPlannedTimeEnd().getTime()));
+                    t.timeEnd = new Date(Math.min(startofnewer.getTime(), t.getPlannedTimeEnd()));
                     if (Config.logTempBasalsCut)
                         log.debug("Add timeEnd to old record");
                     update = true;
@@ -197,23 +185,32 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
     }
 
     @Override
-    public void updateTotalIOB() {
+    public IobTotal getCalculationToTime(long time) {
         checkForExpired(tempBasals);
         checkForExpired(extendedBoluses);
-        Date now = new Date();
-        IobTotal total = new IobTotal();
+        IobTotal total = new IobTotal(time);
         for (Integer pos = 0; pos < tempBasals.size(); pos++) {
             TempBasal t = tempBasals.get(pos);
-            IobTotal calc = t.iobCalc(now);
+            if (t.timeStart.getTime() > time) continue;
+            IobTotal calc = t.iobCalc(time);
+            //log.debug("BasalIOB " + new Date(time) + " >>> " + calc.basaliob);
             total.plus(calc);
         }
         if (useExtendedBoluses) {
             for (Integer pos = 0; pos < extendedBoluses.size(); pos++) {
                 TempBasal t = extendedBoluses.get(pos);
-                IobTotal calc = t.iobCalc(now);
+                if (t.timeStart.getTime() > time) continue;
+                IobTotal calc = t.iobCalc(time);
                 total.plus(calc);
             }
         }
+        return total;
+    }
+
+    @Override
+    public void updateTotalIOB() {
+        IobTotal total = getCalculationToTime(new Date().getTime());
+
         lastCalculationTimestamp = new Date().getTime();
         lastCalculation = total;
     }
@@ -235,6 +232,17 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
             if (t.isInProgress(time)) return t;
         }
         return null;
+    }
+
+    @Override
+    public long oldestDataAvaialable() {
+        long oldestTemp = new Date().getTime();
+        if (tempBasals.size() > 0)
+            oldestTemp = Math.min(oldestTemp, tempBasals.get(tempBasals.size() - 1).timeStart.getTime());
+        if (extendedBoluses.size() > 0)
+            oldestTemp = Math.min(oldestTemp, extendedBoluses.get(extendedBoluses.size() - 1).timeStart.getTime());
+        oldestTemp -= 15 * 60 * 1000L; // allow 15 min before
+        return oldestTemp;
     }
 
     List<TempBasal> getMergedList() {
@@ -261,9 +269,10 @@ public class TempBasalsPlugin implements PluginBase, TempBasalsInterface {
     }
 
     public void onStatusEvent(final EventPreferenceChange s) {
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(MainApp.instance().getApplicationContext());
-        useExtendedBoluses = sharedPreferences.getBoolean("danar_useextended", false);
-        initializeData();
+        if (s.isChanged("danar_useextended")) {
+            useExtendedBoluses = SP.getBoolean("danar_useextended", false);
+            initializeData();
+        }
     }
 
 

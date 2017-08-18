@@ -3,11 +3,7 @@ package info.nightscout.androidaps.db;
 import android.content.Context;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
-import android.text.Html;
-import android.text.Spanned;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
@@ -24,12 +20,16 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
+import info.nightscout.androidaps.Config;
 import info.nightscout.androidaps.Constants;
 import info.nightscout.androidaps.MainApp;
-import info.nightscout.androidaps.R;
-import info.nightscout.utils.DecimalFormatter;
-import info.nightscout.utils.Round;
+import info.nightscout.androidaps.events.EventTreatmentChange;
+import info.nightscout.androidaps.plugins.IobCobCalculator.events.EventNewHistoryData;
 
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static Logger log = LoggerFactory.getLogger(DatabaseHelper.class);
@@ -37,13 +37,21 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public static final String DATABASE_NAME = "AndroidAPSDb";
     public static final String DATABASE_BGREADINGS = "BgReadings";
     public static final String DATABASE_TEMPBASALS = "TempBasals";
+    public static final String DATABASE_TEMPTARGETS = "TempTargets";
     public static final String DATABASE_TREATMENTS = "Treatments";
     public static final String DATABASE_DANARHISTORY = "DanaRHistory";
+    public static final String DATABASE_DBREQUESTS = "DBRequests";
 
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
+
+    private static Long latestTreatmentChange = null;
+
+    private static final ScheduledExecutorService worker = Executors.newSingleThreadScheduledExecutor();
+    private static ScheduledFuture<?> scheduledPost = null;
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        onCreate(getWritableDatabase(), getConnectionSource());
     }
 
 
@@ -52,11 +60,13 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         try {
             log.info("onCreate");
             TableUtils.createTableIfNotExists(connectionSource, TempBasal.class);
+            TableUtils.createTableIfNotExists(connectionSource, TempTarget.class);
             TableUtils.createTableIfNotExists(connectionSource, Treatment.class);
             TableUtils.createTableIfNotExists(connectionSource, BgReading.class);
             TableUtils.createTableIfNotExists(connectionSource, DanaRHistoryRecord.class);
+            TableUtils.createTableIfNotExists(connectionSource, DbRequest.class);
         } catch (SQLException e) {
-            log.error(DatabaseHelper.class.getName(), "Can't create database", e);
+            log.error("Can't create database", e);
             throw new RuntimeException(e);
         }
     }
@@ -66,12 +76,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         try {
             log.info(DatabaseHelper.class.getName(), "onUpgrade");
             TableUtils.dropTable(connectionSource, TempBasal.class, true);
+            TableUtils.dropTable(connectionSource, TempTarget.class, true);
             TableUtils.dropTable(connectionSource, Treatment.class, true);
             TableUtils.dropTable(connectionSource, BgReading.class, true);
             TableUtils.dropTable(connectionSource, DanaRHistoryRecord.class, true);
+            TableUtils.dropTable(connectionSource, DbRequest.class, true);
             onCreate(database, connectionSource);
         } catch (SQLException e) {
-            log.error(DatabaseHelper.class.getName(), "Can't drop databases", e);
+            log.error("Can't drop databases", e);
             throw new RuntimeException(e);
         }
     }
@@ -87,35 +99,40 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void cleanUpDatabases() {
         // TODO: call it somewhere
         log.debug("Before BgReadings size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_BGREADINGS));
-        getWritableDatabase().delete("BgReadings", "timeIndex" + " < '" + (new Date().getTime() - Constants.hoursToKeepInDatabase * 60 * 60 * 1000L) + "'", null);
+        getWritableDatabase().delete(DATABASE_BGREADINGS, "timeIndex" + " < '" + (new Date().getTime() - Constants.hoursToKeepInDatabase * 60 * 60 * 1000L) + "'", null);
         log.debug("After BgReadings size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_BGREADINGS));
 
         log.debug("Before TempBasals size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_TEMPBASALS));
-        getWritableDatabase().delete("TempBasals", "timeIndex" + " < '" + (new Date().getTime() - Constants.hoursToKeepInDatabase * 60 * 60 * 1000L) + "'", null);
+        getWritableDatabase().delete(DATABASE_TEMPBASALS, "timeIndex" + " < '" + (new Date().getTime() - Constants.hoursToKeepInDatabase * 60 * 60 * 1000L) + "'", null);
         log.debug("After TempBasals size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_TEMPBASALS));
 
+        log.debug("Before TempTargets size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_TEMPTARGETS));
+        getWritableDatabase().delete(DATABASE_TEMPTARGETS, "timeIndex" + " < '" + (new Date().getTime() - Constants.hoursToKeepInDatabase * 60 * 60 * 1000L) + "'", null);
+        log.debug("After TempTargets size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_TEMPTARGETS));
+
         log.debug("Before Treatments size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_TREATMENTS));
-        getWritableDatabase().delete("Treatments", "timeIndex" + " < '" + (new Date().getTime() - Constants.hoursToKeepInDatabase * 60 * 60 * 1000L) + "'", null);
+        getWritableDatabase().delete(DATABASE_TREATMENTS, "timeIndex" + " < '" + (new Date().getTime() - Constants.hoursToKeepInDatabase * 60 * 60 * 1000L) + "'", null);
         log.debug("After Treatments size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_TREATMENTS));
 
-        log.debug("Before History size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), "DanaRHistory"));
-        getWritableDatabase().delete("History", "recordDate" + " < '" + (new Date().getTime() - Constants.daysToKeepHistoryInDatabase * 24 * 60 * 60 * 1000L) + "'", null);
-        log.debug("After History size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), "DanaRHistory"));
+        log.debug("Before History size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_DANARHISTORY));
+        getWritableDatabase().delete(DATABASE_DANARHISTORY, "recordDate" + " < '" + (new Date().getTime() - Constants.daysToKeepHistoryInDatabase * 24 * 60 * 60 * 1000L) + "'", null);
+        log.debug("After History size: " + DatabaseUtils.queryNumEntries(getReadableDatabase(), DATABASE_DANARHISTORY));
     }
 
     public void resetDatabases() {
         try {
             TableUtils.dropTable(connectionSource, TempBasal.class, true);
+            TableUtils.dropTable(connectionSource, TempTarget.class, true);
             TableUtils.dropTable(connectionSource, Treatment.class, true);
             TableUtils.dropTable(connectionSource, BgReading.class, true);
             TableUtils.dropTable(connectionSource, DanaRHistoryRecord.class, true);
+            //DbRequests can be cleared from NSClient fragment
             TableUtils.createTableIfNotExists(connectionSource, TempBasal.class);
+            TableUtils.createTableIfNotExists(connectionSource, TempTarget.class);
             TableUtils.createTableIfNotExists(connectionSource, Treatment.class);
             TableUtils.createTableIfNotExists(connectionSource, BgReading.class);
             TableUtils.createTableIfNotExists(connectionSource, DanaRHistoryRecord.class);
-//            MainApp.bus().post(new EventNewBG());
-//            MainApp.bus().post(new EventTreatmentChange());
-//            MainApp.bus().post(new EventTempBasalChange());
+            latestTreatmentChange = 0L;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -123,9 +140,18 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     public void resetTreatments() {
         try {
-
             TableUtils.dropTable(connectionSource, Treatment.class, true);
             TableUtils.createTableIfNotExists(connectionSource, Treatment.class);
+            latestTreatmentChange = 0L;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void resetTempTargets() {
+        try {
+            TableUtils.dropTable(connectionSource, TempTarget.class, true);
+            TableUtils.createTableIfNotExists(connectionSource, TempTarget.class);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -135,7 +161,11 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return getDao(TempBasal.class);
     }
 
-    public Dao<Treatment, Long> getDaoTreatments() throws SQLException {
+    public Dao<TempTarget, Long> getDaoTempTargets() throws SQLException {
+        return getDao(TempTarget.class);
+    }
+
+    private Dao<Treatment, Long> getDaoTreatments() throws SQLException {
         return getDao(Treatment.class);
     }
 
@@ -147,54 +177,20 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return getDao(DanaRHistoryRecord.class);
     }
 
-    /*
-     * Return last BgReading from database or null if db is empty
-     */
-    @Nullable
-    public BgReading lastBg() {
-        List<BgReading> bgList = null;
-
-        try {
-            Dao<BgReading, Long> daoBgReadings = MainApp.getDbHelper().getDaoBgReadings();
-            QueryBuilder<BgReading, Long> queryBuilder = daoBgReadings.queryBuilder();
-            queryBuilder.orderBy("timeIndex", false);
-            queryBuilder.limit(1L);
-            queryBuilder.where().gt("value", 38);
-            PreparedQuery<BgReading> preparedQuery = queryBuilder.prepare();
-            bgList = daoBgReadings.query(preparedQuery);
-
-        } catch (SQLException e) {
-            log.debug(e.getMessage(), e);
-        }
-        if (bgList != null && bgList.size() > 0)
-            return bgList.get(0);
-        else
-            return null;
+    public Dao<DbRequest, String> getDaoDbRequest() throws SQLException {
+        return getDao(DbRequest.class);
     }
 
-    /*
-     * Return bg reading if not old ( <9 min )
-     * or null if older
-     */
-    @Nullable
-    public BgReading actualBg() {
-        BgReading lastBg = lastBg();
-
-        if (lastBg == null)
-            return null;
-
-        if (lastBg.timeIndex > new Date().getTime() - 9 * 60 * 1000)
-            return lastBg;
-
-        return null;
+    public long size(String database) {
+        return DatabaseUtils.queryNumEntries(getReadableDatabase(), database);
     }
 
-    public List<BgReading> getDataFromTime(long mills) {
+    public List<BgReading> getBgreadingsDataFromTime(long mills, boolean ascending) {
         try {
             Dao<BgReading, Long> daoBgreadings = getDaoBgReadings();
             List<BgReading> bgReadings;
             QueryBuilder<BgReading, Long> queryBuilder = daoBgreadings.queryBuilder();
-            queryBuilder.orderBy("timeIndex", true);
+            queryBuilder.orderBy("timeIndex", ascending);
             Where where = queryBuilder.where();
             where.ge("timeIndex", mills).and().gt("value", 38);
             PreparedQuery<BgReading> preparedQuery = queryBuilder.prepare();
@@ -206,126 +202,268 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return new ArrayList<BgReading>();
     }
 
-    /*
-     * Returns glucose_status for openAPS or null if no actual data available
-     */
-    public static class GlucoseStatus implements Parcelable {
-        public double glucose = 0d;
-        public double delta = 0d;
-        public double avgdelta = 0d;
+    // DbRequests handling
 
-        @Override
-        public String toString() {
-            return MainApp.sResources.getString(R.string.glucose) + " " + DecimalFormatter.to0Decimal(glucose) + " mg/dl\n" +
-                    MainApp.sResources.getString(R.string.delta) + " " + DecimalFormatter.to0Decimal(delta) + " mg/dl\n" +
-                    MainApp.sResources.getString(R.string.avgdelta) + " " + DecimalFormatter.to2Decimal(avgdelta) + " mg/dl";
-        }
-
-        public Spanned toSpanned() {
-            return Html.fromHtml("<b>" + MainApp.sResources.getString(R.string.glucose) + "</b>: " + DecimalFormatter.to0Decimal(glucose) + " mg/dl<br>" +
-                    "<b>" + MainApp.sResources.getString(R.string.delta) + "</b>: " + DecimalFormatter.to0Decimal(delta) + " mg/dl<br>" +
-                    "<b>" + MainApp.sResources.getString(R.string.avgdelta) + "</b>: " + DecimalFormatter.to2Decimal(avgdelta) + " mg/dl");
-        }
-
-        @Override
-        public int describeContents() {
-            return 0;
-        }
-
-        @Override
-        public void writeToParcel(Parcel dest, int flags) {
-            dest.writeDouble(avgdelta);
-            dest.writeDouble(delta);
-            dest.writeDouble(glucose);
-        }
-
-        public final Parcelable.Creator<GlucoseStatus> CREATOR = new Parcelable.Creator<GlucoseStatus>() {
-            public GlucoseStatus createFromParcel(Parcel in) {
-                return new GlucoseStatus(in);
-            }
-
-            public GlucoseStatus[] newArray(int size) {
-                return new GlucoseStatus[size];
-            }
-        };
-
-        private GlucoseStatus(Parcel in) {
-            avgdelta = in.readDouble();
-            delta = in.readDouble();
-            glucose = in.readDouble();
-        }
-
-        public GlucoseStatus() {
-        }
-
-        public GlucoseStatus(Double glucose, Double delta, Double avgdelta) {
-            this.glucose = glucose;
-            this.delta = delta;
-            this.avgdelta = avgdelta;
-        }
-
-        public GlucoseStatus round() {
-            this.glucose = Round.roundTo(this.glucose, 0.1);
-            this.delta = Round.roundTo(this.delta, 0.01);
-            this.avgdelta = Round.roundTo(this.avgdelta, 0.01);
-            return this;
+    public void create(DbRequest dbr) {
+        try {
+            getDaoDbRequest().create(dbr);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    @Nullable
-    public GlucoseStatus getGlucoseStatusData() {
-        GlucoseStatus result = new GlucoseStatus();
+    public int delete(DbRequest dbr) {
         try {
+            return getDaoDbRequest().delete(dbr);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 
-            Dao<BgReading, Long> daoBgreadings = null;
-            daoBgreadings = getDaoBgReadings();
-            List<BgReading> bgReadings;
-            QueryBuilder<BgReading, Long> queryBuilder = daoBgreadings.queryBuilder();
-            queryBuilder.orderBy("timeIndex", false);
-            queryBuilder.where().gt("value", 38);
-            queryBuilder.limit(4l);
-            PreparedQuery<BgReading> preparedQuery = queryBuilder.prepare();
-            bgReadings = daoBgreadings.query(preparedQuery);
+    public int deleteDbRequest(String nsClientId) {
+        try {
+            return getDaoDbRequest().deleteById(nsClientId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 
-            int sizeRecords = bgReadings.size();
-
-            if (sizeRecords < 4 || bgReadings.get(sizeRecords - 4).timeIndex < new Date().getTime() - 7 * 60 * 1000L) {
-                return null;
-            }
-
-            double minutes = 5;
-            double change;
-            double avg;
-
-            if (bgReadings.size() > 3) {
-                BgReading now = bgReadings.get(sizeRecords - 4);
-                BgReading last = bgReadings.get(sizeRecords - 3);
-                BgReading last1 = bgReadings.get(sizeRecords - 2);
-                BgReading last2 = bgReadings.get(sizeRecords - 1);
-                if (last2.value > 38) {
-                    minutes = (now.timeIndex - last2.timeIndex)/(60d*1000);
-                    change = now.value - last2.value;
-                } else if (last1.value > 38) {
-                    minutes = (now.timeIndex - last1.timeIndex)/(60d*1000);;
-                    change = now.value - last1.value;
-                } else if (last.value > 38) {
-                    minutes = (now.timeIndex - last.timeIndex)/(60d*1000);
-                    change = now.value - last.value;
-                } else {
-                    change = 0;
-                }
-                //multiply by 5 to get the same unit as delta, i.e. mg/dL/5m
-                avg = change / minutes * 5;
-
-                result.glucose = now.value;
-                result.delta = (now.value - last.value)*5*60*1000/(now.getTimeIndex() - last.getTimeIndex());
-                result.avgdelta = avg;
+    public int deleteDbRequestbyMongoId(String action, String id) {
+        try {
+            QueryBuilder<DbRequest, String> queryBuilder = getDaoDbRequest().queryBuilder();
+            Where where = queryBuilder.where();
+            where.eq("_id", id).and().eq("action", action);
+            queryBuilder.limit(10L);
+            PreparedQuery<DbRequest> preparedQuery = queryBuilder.prepare();
+            List<DbRequest> dbList = getDaoDbRequest().query(preparedQuery);
+            if (dbList.size() != 1) {
+                log.error("deleteDbRequestbyMongoId query size: " + dbList.size());
+            } else {
+                //log.debug("Treatment findTreatmentById found: " + trList.get(0).log());
+                return delete(dbList.get(0));
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return null;
         }
-        result.round();
-        return result;
+        return 0;
     }
+
+    public void deleteAllDbRequests() {
+        try {
+            TableUtils.clearTable(connectionSource, DbRequest.class);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // TREATMENT HANDLING
+
+    public boolean affectingIobCob(Treatment t) {
+        Treatment existing = findTreatmentByTimeIndex(t.timeIndex);
+        if (existing == null)
+            return true;
+        if (existing.insulin == t.insulin && existing.carbs == t.carbs)
+            return false;
+        return true;
+    }
+
+    public int update(Treatment treatment) {
+        int updated = 0;
+        try {
+            boolean historyChange = affectingIobCob(treatment);
+            updated = getDaoTreatments().update(treatment);
+            if (historyChange)
+                latestTreatmentChange = treatment.getTimeIndex();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        scheduleTreatmentChange();
+        return updated;
+    }
+
+    public Dao.CreateOrUpdateStatus createOrUpdate(Treatment treatment) {
+        Dao.CreateOrUpdateStatus status = null;
+        try {
+            boolean historyChange = affectingIobCob(treatment);
+            status = getDaoTreatments().createOrUpdate(treatment);
+            if (historyChange)
+                latestTreatmentChange = treatment.getTimeIndex();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        scheduleTreatmentChange();
+        return status;
+    }
+
+    public void create(Treatment treatment) {
+        try {
+            getDaoTreatments().create(treatment);
+            latestTreatmentChange = treatment.getTimeIndex();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        scheduleTreatmentChange();
+    }
+
+    public void delete(Treatment treatment) {
+        try {
+            getDaoTreatments().delete(treatment);
+            latestTreatmentChange = treatment.getTimeIndex();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        scheduleTreatmentChange();
+    }
+
+    public int delete(String _id) {
+        Treatment stored = findTreatmentById(_id);
+        int removed = 0;
+        if (stored != null) {
+            log.debug("REMOVE: Existing treatment (removing): " + _id);
+            try {
+                removed = getDaoTreatments().delete(stored);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            if (Config.logIncommingData)
+                log.debug("Records removed: " + removed);
+            latestTreatmentChange = stored.getTimeIndex();
+            scheduleTreatmentChange();
+        } else {
+            log.debug("REMOVE: Not stored treatment (ignoring): " + _id);
+        }
+        return removed;
+    }
+
+    @Nullable
+    public Treatment findTreatmentById(String _id) {
+        try {
+            Dao<Treatment, Long> daoTreatments = getDaoTreatments();
+            QueryBuilder<Treatment, Long> queryBuilder = daoTreatments.queryBuilder();
+            Where where = queryBuilder.where();
+            where.eq("_id", _id);
+            queryBuilder.limit(10L);
+            PreparedQuery<Treatment> preparedQuery = queryBuilder.prepare();
+            List<Treatment> trList = daoTreatments.query(preparedQuery);
+            if (trList.size() != 1) {
+                //log.debug("Treatment findTreatmentById query size: " + trList.size());
+                return null;
+            } else {
+                //log.debug("Treatment findTreatmentById found: " + trList.get(0).log());
+                return trList.get(0);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Nullable
+    public Treatment findTreatmentByTimeIndex(Long timeIndex) {
+        try {
+            QueryBuilder<Treatment, String> qb = null;
+            Dao<Treatment, Long> daoTreatments = getDaoTreatments();
+            QueryBuilder<Treatment, Long> queryBuilder = daoTreatments.queryBuilder();
+            Where where = queryBuilder.where();
+            where.eq("timeIndex", timeIndex);
+            queryBuilder.limit(10L);
+            PreparedQuery<Treatment> preparedQuery = queryBuilder.prepare();
+            List<Treatment> trList = daoTreatments.query(preparedQuery);
+            if (trList.size() != 1) {
+                log.debug("Treatment findTreatmentByTimeIndex query size: " + trList.size());
+                return null;
+            } else {
+                log.debug("Treatment findTreatmentByTimeIndex found: " + trList.get(0).log());
+                return trList.get(0);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    static public void scheduleTreatmentChange() {
+        class PostRunnable implements Runnable {
+            public void run() {
+                MainApp.bus().post(new EventTreatmentChange());
+                if (latestTreatmentChange != null)
+                    MainApp.bus().post(new EventNewHistoryData(latestTreatmentChange));
+                latestTreatmentChange = null;
+                scheduledPost = null;
+            }
+        }
+        // prepare task for execution in 5 sec
+        // cancel waiting task to prevent sending multiple posts
+        if (scheduledPost != null)
+            scheduledPost.cancel(false);
+        Runnable task = new PostRunnable();
+        final int sec = 5;
+        scheduledPost = worker.schedule(task, sec, TimeUnit.SECONDS);
+
+    }
+
+    public List<Treatment> getTreatmentDataFromTime(long mills, boolean ascending) {
+        try {
+            Dao<Treatment, Long> daoTreatments = getDaoTreatments();
+            List<Treatment> treatments;
+            QueryBuilder<Treatment, Long> queryBuilder = daoTreatments.queryBuilder();
+            queryBuilder.orderBy("timeIndex", ascending);
+            Where where = queryBuilder.where();
+            where.ge("timeIndex", mills);
+            PreparedQuery<Treatment> preparedQuery = queryBuilder.prepare();
+            treatments = daoTreatments.query(preparedQuery);
+            return treatments;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<Treatment>();
+    }
+
+    public void delete(TempBasal tempBasal) {
+        try {
+            getDaoTempBasals().delete(tempBasal);
+            latestTreatmentChange = tempBasal.getTimeIndex();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        scheduleTreatmentChange();
+    }
+
+    public List<TempTarget> getTemptargetsDataFromTime(long mills, boolean ascending) {
+        try {
+            Dao<TempTarget, Long> daoTempTargets = getDaoTempTargets();
+            List<TempTarget> tempTargets;
+            QueryBuilder<TempTarget, Long> queryBuilder = daoTempTargets.queryBuilder();
+            queryBuilder.orderBy("timeIndex", ascending);
+            Where where = queryBuilder.where();
+            where.ge("timeIndex", mills);
+            PreparedQuery<TempTarget> preparedQuery = queryBuilder.prepare();
+            tempTargets = daoTempTargets.query(preparedQuery);
+            return tempTargets;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<TempTarget>();
+    }
+
+
+    public List<TempBasal> getTempbasalsDataFromTime(long mills, boolean ascending, boolean isExtended) {
+        try {
+            Dao<TempBasal, Long> daoTempbasals = getDaoTempBasals();
+            List<TempBasal> tempbasals;
+            QueryBuilder<TempBasal, Long> queryBuilder = daoTempbasals.queryBuilder();
+            queryBuilder.orderBy("timeIndex", ascending);
+            Where where = queryBuilder.where();
+            where.ge("timeIndex", mills).and().eq("isExtended", isExtended);
+            PreparedQuery<TempBasal> preparedQuery = queryBuilder.prepare();
+            tempbasals = daoTempbasals.query(preparedQuery);
+            return tempbasals;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<TempBasal>();
+    }
+
 }

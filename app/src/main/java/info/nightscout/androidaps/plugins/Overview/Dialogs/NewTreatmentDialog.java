@@ -16,6 +16,9 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
+
 import java.text.DecimalFormat;
 
 import info.nightscout.androidaps.Constants;
@@ -28,7 +31,8 @@ import info.nightscout.utils.SafeParse;
 
 public class NewTreatmentDialog extends DialogFragment implements OnClickListener {
 
-    Button deliverButton;
+    Button okButton;
+    Button cancelButton;
     TextView insulin;
     TextView carbs;
 
@@ -49,9 +53,11 @@ public class NewTreatmentDialog extends DialogFragment implements OnClickListene
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.overview_newtreatment_dialog, null, false);
 
-        deliverButton = (Button) view.findViewById(R.id.treatments_newtreatment_deliverbutton);
+        okButton = (Button) view.findViewById(R.id.ok);
+        okButton.setOnClickListener(this);
+        cancelButton = (Button) view.findViewById(R.id.cancel);
+        cancelButton.setOnClickListener(this);
 
-        deliverButton.setOnClickListener(this);
         getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         insulin = (TextView) view.findViewById(R.id.treatments_newtreatment_insulinamount);
@@ -76,7 +82,7 @@ public class NewTreatmentDialog extends DialogFragment implements OnClickListene
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.treatments_newtreatment_deliverbutton:
+            case R.id.ok:
 
                 try {
                     Double insulin = SafeParse.stringToDouble(this.insulin.getText().toString());
@@ -107,7 +113,7 @@ public class NewTreatmentDialog extends DialogFragment implements OnClickListene
                                 mHandler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        PumpEnactResult result = pump.deliverTreatment(finalInsulinAfterConstraints, finalCarbsAfterConstraints, context);
+                                        PumpEnactResult result = pump.deliverTreatment(MainApp.getConfigBuilder().getActiveInsulin(), finalInsulinAfterConstraints, finalCarbsAfterConstraints, context);
                                         if (!result.success) {
                                             AlertDialog.Builder builder = new AlertDialog.Builder(context);
                                             builder.setTitle(MainApp.sResources.getString(R.string.treatmentdeliveryerror));
@@ -117,6 +123,7 @@ public class NewTreatmentDialog extends DialogFragment implements OnClickListene
                                         }
                                     }
                                 });
+                                Answers.getInstance().logCustom(new CustomEvent("Bolus"));
                             }
                         }
                     });
@@ -126,6 +133,9 @@ public class NewTreatmentDialog extends DialogFragment implements OnClickListene
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                break;
+            case R.id.cancel:
+                dismiss();
                 break;
         }
 

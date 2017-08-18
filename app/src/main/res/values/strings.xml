@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">AndroidAPS</string>
     <string name="treatmentssafety_title">Tratments safety</string>
     <string name="treatmentssafety_maxbolus_title">Max allowed bolus [U]</string>
     <string name="treatmentssafety_maxcarbs_title">Max allowed carbs [g]</string>
@@ -20,14 +19,14 @@
     <string name="objectives_gate_label_string">Gate:</string>
     <string name="objectives_button_start">Start</string>
     <string name="objectives_button_verify">Verify</string>
-    <string name="nsprofileview_units_label">Units:</string>
-    <string name="nsprofileview_dia_label">DIA:</string>
-    <string name="nsprofileview_activeprofile_label">Active profile:</string>
-    <string name="nsprofileview_ic_label">IC:</string>
-    <string name="nsprofileview_isf_label">ISF:</string>
-    <string name="nsprofileview_basal_label">Basal:</string>
-    <string name="nsprofileview_target_label">Target:</string>
-    <string name="nsprofileview_noprofile_text">NO PROFILE SET</string>
+    <string name="nsprofileview_units_label">Units</string>
+    <string name="nsprofileview_dia_label">DIA</string>
+    <string name="nsprofileview_activeprofile_label">Active profile</string>
+    <string name="nsprofileview_ic_label">IC</string>
+    <string name="nsprofileview_isf_label">ISF</string>
+    <string name="nsprofileview_basal_label">Basal</string>
+    <string name="nsprofileview_target_label">Target</string>
+    <string name="noprofileset">NO PROFILE SET</string>
     <string name="treatments_insulin_label_string">Insulin:</string>
     <string name="treatments_carbs_label_string">Carbs:</string>
     <string name="treatments_iob_label_string">IOB:</string>
@@ -50,11 +49,11 @@
     <string name="treatments_wizard_total_label">TOTAL</string>
     <string name="openapsma_run">Run now</string>
     <string name="vitualpump_label">VIRTUAL PUMP</string>
-    <string name="virtualpump_basebasalrate_label">Base basal rate:</string>
-    <string name="virtualpump_tempbasal_label">Temp basal:</string>
-    <string name="virtualpump_extendedbolus_label">Extended bolus:</string>
-    <string name="virtualpump_battery_label">Battery:</string>
-    <string name="virtualpump_reservoir_label">Reservoir:</string>
+    <string name="virtualpump_basebasalrate_label">Base basal rate</string>
+    <string name="virtualpump_tempbasal_label">Temp basal</string>
+    <string name="virtualpump_extendedbolus_label">Extended bolus</string>
+    <string name="virtualpump_battery_label">Battery</string>
+    <string name="virtualpump_reservoir_label">Reservoir</string>
     <string name="virtualpump_resultok">OK</string>
     <string name="virtualpump_sqlerror">SQL Error</string>
     <string name="openapsma_lastrun_label">Last run</string>
@@ -107,7 +106,8 @@
     <string name="loop_constraintsprocessed_label">After processed constraints</string>
     <string name="loop_setbypump_label">Set by pump</string>
     <string name="openapsma_lastenact_label">Last enacted</string>
-    <string name="refreshfromnightscout">Do you want to refresh treatments from Nightscout</string>
+    <string name="refreshtreatmentsfromnightscout">Do you want to refresh treatments from Nightscout</string>
+    <string name="refreshtemptargetsfromnightscout">Do you want to refresh temp targets from Nightscout</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="noapsselected">NO APS SELECTED OR PROVIDED RESULT</string>
@@ -115,6 +115,7 @@
     <string name="openapsma_disabled">Plugin is disabled</string>
     <string name="constraints_violation">Constraints violation</string>
     <string name="treatmentdeliveryerror">Bolus delivery error</string>
+    <string name="tempbasaldeliveryerror">Tempbasal delivery error</string>
     <string name="overview_newtempbasal_basal_label">Basal value</string>
     <string name="overview_newtempbasal_percent_label">% (100% = current)</string>
     <string name="setbasalquestion">Accept new temp basal:</string>
@@ -138,6 +139,8 @@
     <string name="closedloop">Closed Loop</string>
     <string name="openloop">Open Loop</string>
     <string name="disabledloop">Loop Disabled</string>
+    <string name="disableloop">Disable loop</string>
+    <string name="enableloop">Enable loop</string>
 
     <string name="openloop_newsuggestion">New suggestion available</string>
     <string name="unsupportedclientver">Unsupported version of NSClient</string>
@@ -181,7 +184,7 @@
     <string name="careportal_newnstreatment_duration_label">Duration</string>
     <string name="careportal_newnstreatment_percent_label">Percent</string>
     <string name="careportal_newnstreatment_absolute_label">Absolute</string>
-    <string name="careportal_newnstreatment_duration_min">min</string>
+    <string name="careportal_newnstreatment_minutes">min</string>
     <string name="careportal_newnstreatment_notes_label">Notes</string>
     <string name="careportal_newnstreatment_eventtime_label">Event time</string>
     <string name="careportal_newnstreatment_profile_label">Profile</string>
@@ -206,10 +209,15 @@
     <string name="nav_import">Import settings</string>
     <string name="de_lang">German</string>
     <string name="es_lang">Spanish</string>
+    <string name="el_lang">Greek</string>
+    <string name="it_lang">Italian</string>
+    <string name="ru_lang">Russian</string>
     <string name="openapsma_low_summary">The minimum BG value to be in range.</string>
     <string name="openapsma_high_summary">The maximum BG value to be in range.</string>
-    <string name="openapsma_maxbasal_summary">Max U/hr a Temp Basal can be set to</string>
-    <string name="openapsma_maxiob_summary">Maximum basal IOB OpenAPS can deliver [U]</string>
+    <string name="openapsma_maxbasal_title">Max U/hr a Temp Basal can be set to</string>
+    <string name="openapsma_maxbasal_summary">This value is called max basal in OpenAPS context</string>
+    <string name="openapsma_maxiob_title">Maximum basal IOB OpenAPS can deliver [U]</string>
+    <string name="openapsma_maxiob_summary">This value is called Max IOB in OpenAPS context\nThis will default to zero. After several days or weeks, depending on your comfort level, you may choose to adjust this number.</string>
     <string name="bg_lang">Bulgarian</string>
     <string name="dismiss">DISMISS</string>
     <string name="language">Language</string>
@@ -218,7 +226,7 @@
     <string name="connecting">Connecting</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
-    <string name="syncprofiletopump_title">Sync Nightscout profile to pump</string>
+    <string name="syncprofiletopump_title">Sync profile to pump</string>
     <string name="danar_pump_settings">DanaR pump settings</string>
     <string name="nightscout">Nightscout</string>
     <string name="end_user_license_agreement">End User License Agreement</string>
@@ -228,9 +236,8 @@
     <string name="nobtadapter">No bluetooth adapter found</string>
     <string name="devicenotfound">Selected device not found</string>
     <string name="connectionerror">Pump connection error</string>
-    <string name="virtualpump_lastconnection_label">Last connection:</string>
-    <string name="danar_iob_label">Pump IOB:</string>
-    <string name="danar_dailyunits">Daily units:</string>
+    <string name="danar_iob_label">Pump IOB</string>
+    <string name="danar_dailyunits">Daily units</string>
     <string name="danar_lastbolus">Last bolus:</string>
     <string name="hoursago">h ago</string>
     <string name="danar_invalidinput">Invalid input data</string>
@@ -248,20 +255,22 @@
     <string name="smscommunicator_allowednumbers">Allowed phone numbers</string>
     <string name="smscommunicator_allowednumbers_summary">+XXXXXXXXXX;+YYYYYYYYYY</string>
     <string name="smscommunicator_bolusreplywithcode" formatted="false">To deliver bolus %.2fU reply with code %s</string>
+    <string name="smscommunicator_calibrationreplywithcode" formatted="false">To send calibration %.2f reply with code %s</string>
     <string name="smscommunicator_bolusfailed">Bolus failed</string>
     <string name="bolusdelivered" formatted="false">Bolus %.2fU delivered successfully</string>
+    <string name="bolusrequested" formatted="false">Going to deliver %.2fU</string>
     <string name="smscommunicator_bolusdelivered" formatted="false">Bolus %.2fU delivered successfully</string>
     <string name="bolusdelivering" formatted="false">Delivering %.2fU</string>
     <string name="smscommunicator_remotecommandsallowed">Allow remote commands via SMS</string>
     <string name="smscommunicator_remotebolusnotallowed">Remote bolus not allowed</string>
     <string name="glucosetype_finger">Finger</string>
     <string name="glucosetype_sensor">Sensor</string>
-    <string name="glucosetype_manual">Manual</string>
+    <string name="manual">Manual</string>
     <string name="careportal_temporarytarget">Temporary Target</string>
     <string name="careportal_temporarytargetcancel">Temporary Target Cancel</string>
     <string name="danarprofile">DanaR profile settings</string>
     <string name="danarprofile_dia">DIA [h]</string>
-    <string name="danarprofile_car">Carbs absorption rate</string>
+    <string name="danarprofile_dia_summary">Duration of Insulin Activity</string>
     <string name="failedupdatebasalprofile">Failed to update basal profile</string>
     <string name="danar_history">History</string>
     <string name="danar_historyreload">Reload</string>
@@ -287,7 +296,7 @@
     <string name="danar_history_refill">Refill</string>
     <string name="danar_history_syspend">Suspend</string>
     <string name="danar_history_connectingfor" formatted="false">Connecting for %d s</string>
-    <string name="danar_password">Pump password</string>
+    <string name="danar_password_title">Pump password</string>
     <string name="wrongpumppassword">Wrong pump password!</string>
     <string name="pumpbusy">Pump is busy</string>
     <string name="overview_bolusprogress_delivered">Delivered</string>
@@ -296,6 +305,7 @@
     <string name="overview_bolusprogress_stop">Stop</string>
     <string name="overview_bolusprogress_stoppressed">STOP PRESSED</string>
     <string name="waitingforpump">Waiting for pump</string>
+    <string name="waitingforpumpclicktorefresh">Waiting for pump. Click to refresh.</string>
     <string name="overview_bolusprogress_goingtodeliver" formatted="false">Going to deliver %.2fU</string>
     <string name="objectives_0_objective">Setting up visualization and monitoring, and analyzing basals and ratios</string>
     <string name="objectives_0_gate">Verify that BG is available in Nightscout, and pump insulin data is being uploaded</string>
@@ -317,9 +327,12 @@
     <string name="smscommunicator_loophasbeenenabled">Loop has been enabled</string>
     <string name="smscommunicator_loopisdisabled">Loop is disabled</string>
     <string name="smscommunicator_loopisenabled">Loop is enabled</string>
+    <string name="openapsma_valuelimitedto" formatted="false">%.2f limited to %.2f</string>
     <string name="openapsma_valueoutofrange" formatted="false">Value %s is out of hard limits</string>
     <string name="smscommunicator_remotebasalnotallowed">Remote basal setting is not allowed</string>
+    <string name="smscommunicator_remotecommandnotallowed">Remote command is not allowed</string>
     <string name="smscommunicator_basalreplywithcode" formatted="false">To start basal %.2fU/h reply with code %s</string>
+    <string name="smscommunicator_suspendreplywithcode" formatted="false">To suspend loop for %d minutes reply with code %s</string>
     <string name="smscommunicator_tempbasalset" formatted="false">Temp basal %.2fU/h for %d min started successfully</string>
     <string name="smscommunicator_tempbasalfailed">Temp basal start failed</string>
     <string name="smscommunicator_basalstopreplywithcode" formatted="false">To stop temp basal reply with code %s</string>
@@ -359,7 +372,6 @@
     <string name="mgdl">mg/dl</string>
     <string name="mmol">mmol/l</string>
     <string name="dia">DIA:</string>
-    <string name="absorption_rate">Absorption rate:</string>
     <string name="target_range">Target range:</string>
     <string name="edit_base_basal">Edit Base-Basal:</string>
     <string name="edit_base_isf">Edit Base-ISF:</string>
@@ -397,6 +409,208 @@
     <string name="minago">%dmin ago</string>
     <string name="sms_minago">%dmin ago</string>
     <string name="localprofile">Local Profile</string>
-    <string name="virtualpump_firmware_label">Firmware:</string>
-    <string formatted="false" name="danar_model">Model: %02X Protocol: %02X Code: %02X</string>
+    <string name="openapsama">OpenAPS AMA</string>
+    <string name="short_avgdelta">Short avg. delta</string>
+    <string name="long_avgdelta">Long avg. delta</string>
+    <string name="array_of_elements">Array of %d elements.\nActual value:</string>
+    <string name="openapsma_autosensdata_label">Autosens data</string>
+    <string name="openapsma_scriptdebugdata_label">Script debug</string>
+    <string name="openapsama_useautosens">Use AMA autosens feature</string>
+    <string name="temptargetrange">Temp Target</string>
+    <string name="temptargetrange_refreshfromnightscout">Refresh temp targets from NS</string>
+    <string name="eatingsoon">Eating Soon</string>
+    <string name="activity">Activity</string>
+    <string name="removerecord">Remove record:</string>
+    <string name="danar_stats">DanaR Stats</string>
+    <string name="danar_stats_cumulative_tdd">Cumulative TDD</string>
+    <string name="danar_stats_expweight">Exponentially Weighted TDD</string>
+    <string name="danar_stats_basalrate">Basal</string>
+    <string name="danar_stats_bolus">Bolus</string>
+    <string name="danar_stats_tdd">TDD</string>
+    <string name="danar_stats_date">Date</string>
+    <string name="danar_stats_ratio">Ratio</string>
+    <string name="danar_stats_amount_days"># Days</string>
+    <string name="danar_stats_weight">Weight</string>
+    <string name="danar_stats_warning_Message">Possibly inaccurate if using boluses for priming/filling!</string>
+    <string name="danar_stats_olddata_Message">Old Data Please Press "RELOAD"</string>
+    <string name="danar_stats_tbb">Total Base Basal</string>
+    <string name="danar_stats_tbb2">TBB * 2</string>
+    <string name="initializing">Initializing ...</string>
+    <string name="actions_shortname">ACT</string>
+    <string name="configbuilder_shortname">CONF</string>
+    <string name="loop_shortname">LOOP</string>
+    <string name="simpleprofile_shortname">SP</string>
+    <string name="oaps_shortname">OAPS</string>
+    <string name="temptargetrange_shortname">TT</string>
+    <string name="localprofile_shortname">LP</string>
+    <string name="danarpump_shortname">DANA</string>
+    <string name="circadian_percentage_profile_shortname">CPP</string>
+    <string name="tempbasals_shortname">TB</string>
+    <string name="overview_shortname">HOME</string>
+    <string name="virtualpump_shortname">VPUMP</string>
+    <string name="profileviewer_shortname">NSPROFILE</string>
+    <string name="treatments_shortname">TREAT</string>
+    <string name="careportal_shortname">CP</string>
+    <string name="objectives_shortname">OBJ</string>
+    <string name="wear_shortname">WEAR</string>
+    <string name="smscommunicator_shortname">SMS</string>
+    <string name="short_tabtitles">Shorten tab titles</string>
+    <string name="prefs_delta_title">Delta Settings</string>
+    <string name="always_use_shortavg">Always use short average delta instead of simple delta</string>
+    <string name="always_use_shortavg_summary">Useful when data from unfiltered sources like xDrip gets noisy.</string>
+    <string name="advancedsettings_title">Advanced Settings</string>
+    <string name="danar_model" formatted="false">Model: %02X Protocol: %02X Code: %02X</string>
+    <string name="profile">Profile</string>
+    <string name="openapsama_max_daily_safety_multiplier" translatable="false">max_daily_safety_multiplier</string>
+    <string name="openapsama_max_daily_safety_multiplier_summary">Default value: 3\nThis is a key OpenAPS safety cap. What this does is limit your basals to be 3x (in this people) your biggest basal rate. You likely will not need to change this, but you should be aware that’s what is discussed about “3x max daily; 4x current” for safety caps.</string>
+    <string name="openapsama_current_basal_safety_multiplier" translatable="false">current_basal_safety_multiplier</string>
+    <string name="openapsama_current_basal_safety_multiplier_summary">Default value: 4\nThis is the other half of the key OpenAPS safety caps, and the other half of “3x max daily; 4x current” of the safety caps. This means your basal, regardless of max basal set on your pump, cannot be any higher than this number times the current level of your basal. This is to prevent people from getting into dangerous territory by setting excessively high max basals before understanding how the algorithm works. Again, the default is 4x; most people will never need to adjust this and are instead more likely to need to adjust other settings if they feel like they are “running into” this safety cap.</string>
+    <string name="openapsama_autosens_max" translatable="false">autosens_max</string>
+    <string name="openapsama_autosens_max_summary">Default value: 1.2\nThis is a multiplier cap for autosens (and soon autotune) to set a 20% max limit on how high the autosens ratio can be, which in turn determines how high autosens can adjust basals, how low it can adjust ISF, and how low it can set the BG target.</string>
+    <string name="openapsama_autosens_min" translatable="false">autosens_min</string>
+    <string name="openapsama_autosens_min_summary">Default value: 0.7\nThe other side of the autosens safety limits, putting a cap on how low autosens can adjust basals, and how high it can adjust ISF and BG targets.</string>
+    <string name="openapsama_autosens_adjusttargets" translatable="false">autosens_adjust_targets</string>
+    <string name="openapsama_autosens_adjusttargets_summary">Default value: true\nThis is used to allow autosens to adjust BG targets, in addition to ISF and basals.</string>
+    <string name="openapsama_bolussnooze_dia_divisor" translatable="false">bolussnooze_dia_divisor</string>
+    <string name="openapsama_bolussnooze_dia_divisor_summary">Default value: 2\nBolus snooze is enacted after you do a meal bolus, so the loop won’t counteract with low temps when you’ve just eaten. The example here and default is 2; so a 3 hour DIA means that bolus snooze will be gradually phased out over 1.5 hours (3DIA/2).</string>
+    <string name="openapsama_min_5m_carbimpact" translatable="false">min_5m_carbimpact</string>
+    <string name="openapsama_min_5m_carbimpact_summary">Default value: 3.0\nThis is a setting for default carb absorption impact per 5 minutes. The default is an expected 3mg/dl/5min. This affects how fast COB are decayed, and how much carb absorption is assumed in calculating future predicted BG, when BG is falling more than expected, or not rising as much as expected.</string>
+    <string name="openapsama_link_to_preferncejson_doc_txt">Attention!\nNormally you do not have to change these values below. Please CLICK HERE and READ the text and make sure you UNDERSTAND it before change any of these values.</string>
+    <string name="openapsama_link_to_preferncejson_doc">http://openaps.readthedocs.io/en/latest/docs/walkthrough/phase-3/beyond-low-glucose-suspend.html</string>
+    <string name="error_only_numeric_digits_allowed">Only numeric digits are allowed.</string>
+    <string name="error_only_numeric_digits_range_allowed">Only numeric digits within the range %1$s - %2$s are allowed.</string>
+    <string name="error_field_must_not_be_empty">The field must not be empty</string>
+    <string name="error_phone_not_valid">Phone number not valid</string>
+    <string name="smscommunicator_invalidphonennumber">Invalid SMS phone number</string>
+    <string name="copy_to_clipboard">Copy To Clipboard</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="nav_show_logcat">Show log</string>
+    <string name="overview_calibration">Calibration</string>
+    <string name="overview_calibration_bg_label">Calibration BG</string>
+    <string name="send_calibration" formatted="false">Send calibration %.1f to xDrip?</string>
+    <string name="xdripnotinstalled">xDrip+ not installed</string>
+    <string name="calibrationsent">Calibration sent to xDrip</string>
+    <string name="smscommunicator_remotecalibrationnotallowed">Remote calibration not allowed</string>
+    <string name="smscommunicator_calibrationsent">Calibration sent. Receiving must be enabled in xDrip.</string>
+    <string name="smscommunicator_calibrationfailed">xDrip is not receiving calibrations</string>
+    <string name="dont_show_again">Don\'t show again</string>
+    <string name="pumpsuspendedclicktorefresh">Pump suspended. Click to refresh state</string>
+    <string name="pumpsuspended">Pump suspended</string>
+    <string name="gettingpumpstatus">Getting pump status</string>
+    <string name="settingtempbasal">Setting temp basal</string>
+    <string name="stoppingtempbasal">Stopping temp basal</string>
+    <string name="settingextendedbolus">Setting extended bolus</string>
+    <string name="stoppingextendedbolus">Stopping extended bolus</string>
+    <string name="updatingbasalrates">Updating basal rates</string>
+    <string name="disconnecting">Disconnecting</string>
+    <string name="executing">Executing</string>
+    <string name="virtualpump_settings">Virtual pump settings</string>
+    <string name="virtualpump_uploadstatus_title">Upload status to NS</string>
+    <string name="wrongpassword">Wrong password</string>
+    <string name="settings_password">Password for settings</string>
+    <string name="unlock_settings">Unlock settings</string>
+    <string name="approachingdailylimit">Approaching insulin daily limit</string>
+    <string name="nsclientinternal">NSClient</string>
+    <string name="nsclientinternal_shortname">NSCI</string>
+    <string name="nsclientinternal_url">URL:</string>
+    <string name="nsclientinternal_autoscroll">Autoscroll</string>
+    <string name="restart">Restart</string>
+    <string name="nsclientinternal_title">NSClient</string>
+    <string name="nsclientinternal_url_title">Nightscout URL</string>
+    <string name="nsclientinternal_url_dialogmessage">Enter Nightscout URL</string>
+    <string name="nsclientinternal_secret_title">NS API secret</string>
+    <string name="nsclientinternal_secret_dialogtitle">NS API secret</string>
+    <string name="nsclientinternal_secret_dialogmessage">Enter NS API secret (min 12 chars)</string>
+    <string name="nsclientinternal_devicename_title">Device name</string>
+    <string name="nsclientinternal_devicename_dialogtitle">Enter device name</string>
+    <string name="nsclientinternal_devicename_dialogmessage">It will be used for enteredBy field</string>
+    <string name="deliver_now">Deliver now</string>
+    <string name="clear_queue">Clear queue</string>
+    <string name="show_queue">Show queue</string>
+    <string name="queue">Queue:</string>
+    <string name="status">Status:</string>
+    <string name="paused">Paused</string>
+    <string name="key_nsclientinternal_url" translatable="false">nsclientinternal_url</string>
+    <string name="key_nsclientinternal_api_secret" translatable="false">nsclientinternal_api_secret</string>
+    <string name="key_danar_bt_name" translatable="false">danar_bt_name</string>
+    <string name="key_danar_password" translatable="false">danar_password</string>
+    <string name="key_danar_useextended" translatable="false">danar_useextended</string>
+    <string name="key_danarprofile_dia" translatable="false">danarprofile_dia</string>
+    <string name="clearlog">Clear log</string>
+    <string name="key_nsclientinternal_autoscroll" translatable="false">nsclientinternal_autoscroll</string>
+    <string name="key_nsclientinternal_paused" translatable="false">nsclientinternal_paused</string>
+    <string name="nowritepermission">NSCLIENT has no write permission. Wrong API secret?</string>
+    <string name="wear_settings">Wear settings</string>
+    <string name="wear_detailedIOB_title">Show detailed IOB</string>
+    <string name="wear_detailedIOB_summary">Break down IOB into bolus and basal IOB on the watchface</string>
+    <string name="nosuccess">not successful - please check phone</string>
+    <string name="notavailable">Not available</string>
+    <string name="key_smscommunicator_allowednumbers" translatable="false">smscommunicator_allowednumbers</string>
+    <string name="key_smscommunicator_remotecommandsallowed" translatable="false">smscommunicator_remotecommandsallowed</string>
+    <string name="patientage">Patient age</string>
+    <string name="child">Child</string>
+    <string name="teenage">Teenage</string>
+    <string name="adult">Adult</string>
+    <string name="key_age" translatable="false">age</string>
+    <string name="key_child" translatable="false">child</string>
+    <string name="key_teenage" translatable="false">teenage</string>
+    <string name="key_adult" translatable="false">adult</string>
+    <string name="patientage_summary">Please select patient age to setup safety limits</string>
+    <string name="key_i_understand" translatable="false">I_understand</string>
+    <string name="Glimp">Glimp</string>
+    <string name="batteryoptimalizationerror">Device does not appear to support battery optimization whitelisting!</string>
+    <string name="pleaseallowpermission">Please Allow Permission</string>
+    <string name="needwhitelisting">%s needs battery optimalization whitelisting for proper performance</string>
+    <string name="loopsuspended">Loop suspended</string>
+    <string name="loopsuspendedfor" formatted="false">Suspended (%d m)</string>
+    <string name="loopsuperbolusfor" formatted="false">Superbolus (%d m)</string>
+    <string name="loopmenu">Loop menu</string>
+    <string name="suspendloopfor1h">Suspend loop for 1h</string>
+    <string name="suspendloopfor2h">Suspend loop for 2h</string>
+    <string name="suspendloopfor3h">Suspend loop for 3h</string>
+    <string name="suspendloopfor10h">Suspend loop for 10 h</string>
+    <string name="disconnectpumpfor30m">Disconnect pump for 30 min</string>
+    <string name="disconnectpumpfor1h">Disconnect pump for 1 h</string>
+    <string name="disconnectpumpfor2h">Disconnect pump for 2 h</string>
+    <string name="disconnectpumpfor3h">Disconnect pump for 3 h</string>
+    <string name="disconnectpumpfor10h">Disconnect pump for 10 h</string>
+    <string name="resume">Resume</string>
+    <string name="smscommunicator_wrongduration">Wrong duration</string>
+    <string name="smscommunicator_loopsuspended">Loop suspended</string>
+    <string name="smscommunicator_loopresumed">Loop resumed</string>
+    <string name="treatments_wizard_bgtrend_label">15min trend</string>
+    <string name="treatments_wizard_cob_label">COB</string>
+    <string name="superbolus">Superbolus</string>
+    <string name="ns_logappstartedevent">Log app start to NS</string>
+    <string name="key_ns_logappstartedevent" translatable="false">ns_logappstartedevent</string>
+    <string name="restartingapp">Exiting application to apply settings.</string>
+    <string name="configbuilder_insulin">Insulin</string>
+    <string name="fastactinginsulin">Fast Acting Insulin</string>
+    <string name="fastactinginsulincomment">Novorapid, Novolog, Humalog</string>
+    <string name="insulin_shortname">INS</string>
+    <string name="fastactinginsulinprolonged">Fast Acting Insulin Prolonged</string>
+    <string name="key_usesuperbolus" translatable="false">key_usersuperbolus</string>
+    <string name="enablesuperbolus">Enable superbolus in wizard</string>
+    <string name="enablesuperbolus_summary">Enable superbolus functionality in wizard. Do not enable until you learn what it really does. IT MAY CAUSE INSULIN OVERDOSE IF USED BLINDLY!</string>
+    <string name="iob">IOB</string>
+    <string name="cob">COB</string>
+    <string name="predictionshortlabel">PRE</string>
+    <string name="basalshortlabel">BAS</string>
+    <string name="virtualpump_firmware_label">Firmware</string>
+    <string name="virtualpump_lastconnection_label">Last connection</string>
+    <string name="danar_bluetooth_status">Bluetooh status</string>
+    <string name="nav_about">About</string>
+    <string name="smscommunicator_missingsmspermission">Missing SMS permission</string>
+    <string name="dev">DEV</string>
+    <string name="xdripstatus_settings">xDrip Status (watch)</string>
+    <string name="xdripstatus">xDrip Statusline (watch)</string>
+    <string name="xdripstatus_shortname">xds</string>
+    <string name="wear_showbgi_title">Show BGI</string>
+    <string name="wear_showbgi_summary">Add BGI to status line</string>
+    <string name="ns_noupload">No upload to NS</string>
+    <string name="ns_noupload_summary">All data sent to NS are dropped. AAPS is connected to NS but no change in NS is done</string>
+    <string name="key_ns_upload_only" translatable="false">ns_upload_only</string>
+    <string name="key_ns_noupload" translatable="false">ns_noupload</string>
+    <string name="basal_step">Basal Step</string>
+    <string name="bolus_step">Bolus Step</string>
 </resources>

@@ -4,6 +4,10 @@
     android:layout_height="match_parent"
     tools:context="info.nightscout.androidaps.plugins.Actions.ActionsFragment">
 
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -21,6 +25,19 @@
             android:layout_weight="0.5"
             android:text="@string/careportal_profileswitch"
             android:textColor="@color/colorProfileSwitchButton" />
+
+        <Button
+            android:id="@+id/actions_temptarget"
+            style="?android:attr/buttonStyle"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="3dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="3dp"
+            android:layout_weight="0.5"
+            android:text="@string/careportal_temporarytarget"
+            android:textColor="@color/colorCalculatorButton" />
 
         <Button
             android:id="@+id/actions_settempbasal"
@@ -62,5 +79,6 @@
             android:textColor="@color/colorTreatmentButton" />
 
     </LinearLayout>
+    </ScrollView>
 
 </FrameLayout>

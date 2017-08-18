@@ -18,10 +18,11 @@ import org.slf4j.LoggerFactory;
 
 import info.nightscout.androidaps.MainApp;
 import info.nightscout.androidaps.R;
+import info.nightscout.androidaps.events.EventPumpStatusChanged;
 import info.nightscout.androidaps.interfaces.PumpInterface;
+import info.nightscout.androidaps.plugins.Overview.events.EventDismissBolusprogressIfRunning;
 import info.nightscout.androidaps.plugins.Overview.events.EventOverviewBolusProgress;
-import info.nightscout.androidaps.plugins.DanaR.events.EventDanaRBolusStart;
-import info.nightscout.androidaps.plugins.DanaR.events.EventDanaRConnectionStatus;
+import info.nightscout.androidaps.plugins.PumpDanaR.events.EventDanaRBolusStart;
 
 public class BolusProgressDialog extends DialogFragment implements View.OnClickListener {
     private static Logger log = LoggerFactory.getLogger(BolusProgressDialog.class);
@@ -29,6 +30,7 @@ public class BolusProgressDialog extends DialogFragment implements View.OnClickL
     TextView statusView;
     TextView stopPressedView;
     ProgressBar progressBar;
+    BolusProgressHelperActivity helperActivity;
 
     static double amount;
     public static boolean bolusEnded = false;
@@ -43,6 +45,10 @@ public class BolusProgressDialog extends DialogFragment implements View.OnClickL
     public void setInsulin(double amount) {
         this.amount = amount;
         bolusEnded = false;
+    }
+
+    public void setHelperActivity(BolusProgressHelperActivity activity) {
+        this.helperActivity = activity;
     }
 
     @Override
@@ -69,6 +75,14 @@ public class BolusProgressDialog extends DialogFragment implements View.OnClickL
         MainApp.bus().register(this);
         running = true;
         if (bolusEnded) dismiss();
+    }
+
+    @Override
+    public void dismiss() {
+        super.dismiss();
+        if (helperActivity != null) {
+            helperActivity.finish();
+        }
     }
 
     @Override
@@ -115,7 +129,14 @@ public class BolusProgressDialog extends DialogFragment implements View.OnClickL
     }
 
     @Subscribe
-    public void onStatusEvent(final EventDanaRConnectionStatus c) {
+    public void onStatusEvent(final EventDismissBolusprogressIfRunning ev) {
+        if(BolusProgressDialog.running){
+            dismiss();
+        }
+    }
+
+    @Subscribe
+    public void onStatusEvent(final EventPumpStatusChanged c) {
 
         Activity activity = getActivity();
         if (activity != null) {
@@ -123,14 +144,7 @@ public class BolusProgressDialog extends DialogFragment implements View.OnClickL
                     new Runnable() {
                         @Override
                         public void run() {
-                            if (c.sStatus == c.CONNECTING) {
-                                statusView.setText(String.format(getString(R.string.danar_history_connectingfor), c.sSecondsElapsed));
-                            } else if (c.sStatus == c.CONNECTED) {
-                                statusView.setText(MainApp.sResources.getString(R.string.connected));
-                            } else {
-                                statusView.setText(MainApp.sResources.getString(R.string.disconnected));
-                                if (started) scheduleDismiss();
-                            }
+                            statusView.setText(c.textStatus());
                         }
                     }
             );
