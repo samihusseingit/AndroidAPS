@@ -42,17 +42,18 @@ import info.nightscout.androidaps.plugins.NSClientInternal.NSClientInternalPlugi
 import info.nightscout.androidaps.plugins.NSClientInternal.receivers.AckAlarmReceiver;
 import info.nightscout.androidaps.plugins.OpenAPSAMA.OpenAPSAMAPlugin;
 import info.nightscout.androidaps.plugins.OpenAPSMA.OpenAPSMAPlugin;
-import info.nightscout.androidaps.plugins.Overview.OverviewFragment;
 import info.nightscout.androidaps.plugins.Overview.OverviewPlugin;
 import info.nightscout.androidaps.plugins.Persistentnotification.PersistentNotificationPlugin;
 import info.nightscout.androidaps.plugins.ProfileCircadianPercentage.CircadianPercentageProfileFragment;
 import info.nightscout.androidaps.plugins.ProfileLocal.LocalProfileFragment;
-import info.nightscout.androidaps.plugins.ProfileNS.NSProfileFragment;
-import info.nightscout.androidaps.plugins.ProfileSimple.SimpleProfileFragment;
+import info.nightscout.androidaps.plugins.ProfileNS.NSProfilePlugin;
+import info.nightscout.androidaps.plugins.ProfileSimple.SimpleProfilePlugin;
 import info.nightscout.androidaps.plugins.PumpDanaR.DanaRPlugin;
 import info.nightscout.androidaps.plugins.PumpDanaR.services.DanaRExecutionService;
 import info.nightscout.androidaps.plugins.PumpDanaRKorean.DanaRKoreanPlugin;
 import info.nightscout.androidaps.plugins.PumpDanaRKorean.services.DanaRKoreanExecutionService;
+import info.nightscout.androidaps.plugins.PumpDanaRS.DanaRSPlugin;
+import info.nightscout.androidaps.plugins.PumpDanaRS.services.DanaRSService;
 import info.nightscout.androidaps.plugins.PumpDanaRv2.DanaRv2Plugin;
 import info.nightscout.androidaps.plugins.PumpDanaRv2.services.DanaRv2ExecutionService;
 import info.nightscout.androidaps.plugins.PumpMDI.MDIPlugin;
@@ -60,12 +61,12 @@ import info.nightscout.androidaps.plugins.PumpVirtual.VirtualPumpPlugin;
 import info.nightscout.androidaps.plugins.SensitivityAAPS.SensitivityAAPSPlugin;
 import info.nightscout.androidaps.plugins.SensitivityOref0.SensitivityOref0Plugin;
 import info.nightscout.androidaps.plugins.SensitivityWeightedAverage.SensitivityWeightedAveragePlugin;
-import info.nightscout.androidaps.plugins.SmsCommunicator.SmsCommunicatorFragment;
+import info.nightscout.androidaps.plugins.SmsCommunicator.SmsCommunicatorPlugin;
 import info.nightscout.androidaps.plugins.SourceGlimp.SourceGlimpPlugin;
 import info.nightscout.androidaps.plugins.SourceMM640g.SourceMM640gPlugin;
 import info.nightscout.androidaps.plugins.SourceNSClient.SourceNSClientPlugin;
 import info.nightscout.androidaps.plugins.SourceXdrip.SourceXdripPlugin;
-import info.nightscout.androidaps.plugins.Treatments.TreatmentsFragment;
+import info.nightscout.androidaps.plugins.Treatments.TreatmentsPlugin;
 import info.nightscout.androidaps.plugins.Wear.WearFragment;
 import info.nightscout.androidaps.plugins.XDripStatusline.StatuslinePlugin;
 import info.nightscout.androidaps.receivers.DataReceiver;
@@ -124,19 +125,20 @@ public class MainApp extends Application {
             pluginsList.add(SensitivityWeightedAveragePlugin.getPlugin());
             if (Config.DANAR) pluginsList.add(DanaRPlugin.getPlugin());
             if (Config.DANAR) pluginsList.add(DanaRKoreanPlugin.getPlugin());
-            if (Config.DANARv2) pluginsList.add(DanaRv2Plugin.getPlugin());
+            if (Config.DANAR) pluginsList.add(DanaRv2Plugin.getPlugin());
+            if (Config.DANAR) pluginsList.add(DanaRSPlugin.getPlugin());
             pluginsList.add(CareportalFragment.getPlugin());
             if (Config.MDI) pluginsList.add(MDIPlugin.getPlugin());
             if (Config.VIRTUALPUMP) pluginsList.add(VirtualPumpPlugin.getInstance());
             if (Config.LOOPENABLED) pluginsList.add(LoopPlugin.getPlugin());
             if (Config.OPENAPSENABLED) pluginsList.add(OpenAPSMAPlugin.getPlugin());
             if (Config.OPENAPSENABLED) pluginsList.add(OpenAPSAMAPlugin.getPlugin());
-            pluginsList.add(NSProfileFragment.getPlugin());
-            if (Config.OTHERPROFILES) pluginsList.add(SimpleProfileFragment.getPlugin());
+            pluginsList.add(NSProfilePlugin.getPlugin());
+            if (Config.OTHERPROFILES) pluginsList.add(SimpleProfilePlugin.getPlugin());
             if (Config.OTHERPROFILES) pluginsList.add(LocalProfileFragment.getPlugin());
             if (Config.OTHERPROFILES)
                 pluginsList.add(CircadianPercentageProfileFragment.getPlugin());
-            pluginsList.add(TreatmentsFragment.getPlugin());
+            pluginsList.add(TreatmentsPlugin.getPlugin());
             if (Config.SAFETY) pluginsList.add(SafetyPlugin.getPlugin());
             if (Config.APS) pluginsList.add(ObjectivesPlugin.getPlugin());
             if (!Config.NSCLIENT)
@@ -146,9 +148,9 @@ public class MainApp extends Application {
                 pluginsList.add(SourceMM640gPlugin.getPlugin());
             if (!Config.NSCLIENT)
                 pluginsList.add(SourceGlimpPlugin.getPlugin());
-            if (Config.SMSCOMMUNICATORENABLED) pluginsList.add(SmsCommunicatorFragment.getPlugin());
+            if (Config.SMSCOMMUNICATORENABLED) pluginsList.add(SmsCommunicatorPlugin.getPlugin());
 
-            if (Config.WEAR) pluginsList.add(WearFragment.getPlugin(this));
+            pluginsList.add(WearFragment.getPlugin(this));
             pluginsList.add(StatuslinePlugin.getPlugin(this));
             pluginsList.add(new PersistentNotificationPlugin(this));
             pluginsList.add(NSClientInternalPlugin.getPlugin());
@@ -208,6 +210,7 @@ public class MainApp extends Application {
                 startService(new Intent(this, DanaRExecutionService.class));
                 startService(new Intent(this, DanaRKoreanExecutionService.class));
                 startService(new Intent(this, DanaRv2ExecutionService.class));
+                startService(new Intent(this, DanaRSService.class));
             }
             keepAliveReceiver.setAlarm(this);
         }
