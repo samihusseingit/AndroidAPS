@@ -236,14 +236,9 @@ class ActionsFragment : DaggerFragment() {
         val profile = profileFunction.getProfile()
         val pump = activePlugin.activePump
 
-        binding.profileSwitch.visibility = (
-            activePlugin.activeProfileSource.profile != null &&
-                pump.pumpDescription.isSetBasalProfileCapable &&
-                pump.isInitialized() &&
-                loop.runningMode != RM.Mode.DISCONNECTED_PUMP &&
-                !pump.isSuspended()).toVisibility()
+        binding.profileSwitch.visibility = View.VISIBLE
 
-        if (!pump.pumpDescription.isExtendedBolusCapable || !pump.isInitialized()  || pump.isSuspended() || loop.runningMode == RM.Mode.DISCONNECTED_PUMP || pump.isFakingTempsByExtendedBoluses || config.AAPSCLIENT) {
+        if (!pump.pumpDescription.isExtendedBolusCapable || !pump.isInitialized()  || pump.isFakingTempsByExtendedBoluses || config.AAPSCLIENT) {
             binding.extendedBolus.visibility = View.GONE
             binding.extendedBolusCancel.visibility = View.GONE
         } else {
@@ -259,7 +254,7 @@ class ActionsFragment : DaggerFragment() {
             }
         }
 
-        if (!pump.pumpDescription.isTempBasalCapable || !pump.isInitialized() || pump.isSuspended() || loop.runningMode == RM.Mode.DISCONNECTED_PUMP || config.AAPSCLIENT) {
+        if (!pump.pumpDescription.isTempBasalCapable || !pump.isInitialized()  || config.AAPSCLIENT) {
             binding.setTempBasal.visibility = View.GONE
             binding.cancelTempBasal.visibility = View.GONE
         } else {

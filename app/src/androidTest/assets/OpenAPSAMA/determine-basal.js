@@ -183,7 +183,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     }
 
     // min_bg of 90 -> threshold of 70, 110 -> 80, and 130 -> 90
-    var threshold = min_bg - 0.5*(min_bg-50);
+    var threshold = 94;
 
     rT = {
         'temp': 'absolute'
@@ -294,10 +294,11 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
     rT.reason="COB: " + round(meal_data.mealCOB, 1) + ", Dev: " + deviation + ", BGI: " + bgi + ", ISF: " + convert_bg(sens, profile) + ", Target: " + convert_bg(target_bg, profile) + "; ";
     if (typeof autosens_data !== 'undefined' && profile.autosens_adjust_targets && autosens_data.ratio != 1)
         rT.reason += "Autosens: " + autosens_data.ratio + "; ";
-    if (bg < threshold) { // low glucose suspend mode: BG is < ~80
+    if (bg <= threshold) { // low glucose suspend mode: BG is < ~80
         rT.reason += "BG " + convert_bg(bg, profile) + "<" + convert_bg(threshold, profile);
-        if ((glucose_status.delta <= 0 && minDelta <= 0) || (glucose_status.delta < expectedDelta && minDelta < expectedDelta) || bg < 60 ) {
+        if ( bg <= threshold || (glucose_status.delta <= 0 && minDelta <= 0) || (glucose_status.delta < expectedDelta && minDelta < expectedDelta) ) {
             // BG is still falling / rising slower than predicted
+            rt.reason += " Threashold " + threshold " Reached, 0 tempting.  ";
             return tempBasalFunctions.setTempBasal(0, 30, profile, rT, currenttemp);
         }
         if (glucose_status.delta > minDelta) {
@@ -467,7 +468,7 @@ var determine_basal = function determine_basal(glucose_status, currenttemp, iob_
 
 //        var maxSafeBasal = Math.min(profile.max_basal, 3 * profile.max_daily_basal, 4 * basal);
 
-        var maxSafeBasal = tempBasalFunctions.getMaxSafeBasal(profile);
+        var maxSafeBasal = 3.0
 
         if (rate > maxSafeBasal) {
             rT.reason += "adj. req. rate: "+round(rate, 2)+" to maxSafeBasal: "+maxSafeBasal+", ";

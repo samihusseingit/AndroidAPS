@@ -61,8 +61,7 @@ class DetermineBasalAMA @Inject constructor(
         consoleError.add(msg)
     }
 
-    private fun getMaxSafeBasal(profile: OapsProfile): Double =
-        min(profile.max_basal, min(profile.max_daily_safety_multiplier * profile.max_daily_basal, profile.current_basal_safety_multiplier * profile.current_basal))
+    private fun getMaxSafeBasal(profile: OapsProfile): Double = 3.0
 
     fun setTempBasal(_rate: Double, duration: Int, profile: OapsProfile, rT: RT, currenttemp: CurrentTemp): RT {
         //var maxSafeBasal = Math.min(profile.max_basal, 3 * profile.max_daily_basal, 4 * profile.current_basal);
@@ -201,7 +200,7 @@ class DetermineBasalAMA @Inject constructor(
         val expectedDelta = calculate_expected_delta(profile.dia, target_bg, eventualBG, bgi)
 
         // min_bg of 90 -> threshold of 70, 110 -> 80, and 130 -> 90
-        val threshold = min_bg - 0.5 * (min_bg - 50)
+        val threshold = 94.0
 
         rT = RT(
             algorithm = APSResult.Algorithm.AMA,
@@ -311,10 +310,12 @@ class DetermineBasalAMA @Inject constructor(
         rT.reason.append("COB: ${round(meal_data.mealCOB, 1).withoutZeros()}, Dev: $deviation, BGI: ${bgi.withoutZeros()}, ISF: ${convert_bg(sens)}, Target: ${convert_bg(target_bg)}; ")
         if (profile.autosens_adjust_targets && autosens_data.ratio != 1.0)
             rT.reason.append("Autosens: " + autosens_data.ratio + "; ")
-        if (bg < threshold) { // low glucose suspend mode: BG is < ~80
+        if (bg <= threshold) { // low glucose suspend mode: BG is < ~80
             rT.reason.append("BG ${convert_bg(bg)}<${convert_bg(threshold)}")
-            if ((glucose_status.delta <= 0 && minDelta <= 0) || (glucose_status.delta < expectedDelta && minDelta < expectedDelta) || bg < 60) {
+            if ( bg <= threshold || (glucose_status.delta <= 0 && minDelta <= 0) || (glucose_status.delta < expectedDelta && minDelta < expectedDelta)) {
                 // BG is still falling / rising slower than predicted
+                rT.reason.append("Threshold Reached: " +  threshold + " will zero temp.")
+
                 return setTempBasal(0.0, 30, profile, rT, currenttemp)
             }
             if (glucose_status.delta > minDelta) {

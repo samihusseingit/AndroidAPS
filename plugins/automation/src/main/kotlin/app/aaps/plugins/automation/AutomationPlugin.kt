@@ -299,7 +299,7 @@ class AutomationPlugin @Inject constructor(
 
     override fun processEvent(someEvent: AutomationEvent) {
         val event = someEvent as AutomationEventObject
-        if (event.canRun() && event.preconditionCanRun()) {
+        if (event.canRun()) {
             val actions = event.actions
             for (action in actions) {
                 action.title = event.title
