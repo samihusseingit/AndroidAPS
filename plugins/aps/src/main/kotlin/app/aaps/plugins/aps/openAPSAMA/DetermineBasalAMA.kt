@@ -60,8 +60,8 @@ class DetermineBasalAMA @Inject constructor(
         rT.reason.append(msg)
         consoleError.add(msg)
     }
-    
-    private fun getMaxSafeBasal(profile: OapsProfile): Double = 3.5
+
+    private fun getMaxSafeBasal(profile: OapsProfile): Double = 4.0
 
     fun setTempBasal(_rate: Double, duration: Int, profile: OapsProfile, rT: RT, currenttemp: CurrentTemp): RT {
         //var maxSafeBasal = Math.min(profile.max_basal, 3 * profile.max_daily_basal, 4 * profile.current_basal);
