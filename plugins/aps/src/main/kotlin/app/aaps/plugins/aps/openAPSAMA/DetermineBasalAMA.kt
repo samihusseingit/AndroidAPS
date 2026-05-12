@@ -60,8 +60,8 @@ class DetermineBasalAMA @Inject constructor(
         rT.reason.append(msg)
         consoleError.add(msg)
     }
-
-    private fun getMaxSafeBasal(profile: OapsProfile): Double = 3.0
+    
+    private fun getMaxSafeBasal(profile: OapsProfile): Double = 3.5
 
     fun setTempBasal(_rate: Double, duration: Int, profile: OapsProfile, rT: RT, currenttemp: CurrentTemp): RT {
         //var maxSafeBasal = Math.min(profile.max_basal, 3 * profile.max_daily_basal, 4 * profile.current_basal);
@@ -305,6 +305,7 @@ class DetermineBasalAMA @Inject constructor(
             rT.snoozeBG = snoozeBG
         }
 
+        rT.reason.append("Has Custom Code =======")
         rT.COB = meal_data.mealCOB
         rT.IOB = iob_data.iob
         rT.reason.append("COB: ${round(meal_data.mealCOB, 1).withoutZeros()}, Dev: $deviation, BGI: ${bgi.withoutZeros()}, ISF: ${convert_bg(sens)}, Target: ${convert_bg(target_bg)}; ")
